@@ -394,6 +394,7 @@ def resend_otp(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def verify_phone_only(request):
+    
     """
     For OAuth users who only need phone verification
     Email is already verified by Google/Facebook
