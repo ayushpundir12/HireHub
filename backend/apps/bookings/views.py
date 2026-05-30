@@ -19,6 +19,10 @@ from .serializers import (
 from apps.pros.permissions import IsProUser
 from .pagination import BookingCursorPagination
 
+from django.core.cache import cache
+from .tasks import send_completion_otp, generate_otp
+
+
 
 class CreateBookingView(APIView):
     """
@@ -157,3 +161,150 @@ class ProReviewListView(ListAPIView):
         return Review.objects.select_related(
             'client'
         ).filter(pro_id=self.kwargs['pro_id'])
+
+
+
+from django.core.cache import cache
+from .tasks import send_completion_otp, generate_otp
+
+
+class RequestCompletionView(APIView):
+    """
+    POST /bookings/:id/request-completion/
+    Pro calls this when the job is physically done.
+
+    What happens:
+    1. Validate booking belongs to this pro and is in_progress
+    2. Generate a 6-digit OTP
+    3. Store OTP in Redis keyed by booking_id (TTL 10 min)
+    4. Fire Celery task to SMS the OTP to client's phone
+    5. Set status to awaiting_confirmation
+
+    Why store OTP by booking_id not user_id?
+    Because the OTP is specific to THIS booking transaction.
+    A user could have multiple active bookings — keying by booking_id
+    ensures there's no collision between them.
+    """
+    permission_classes = [IsAuthenticated, IsProUser]
+
+    def post(self, request, pk):
+        booking = get_object_or_404(
+            Booking, pk=pk, pro=request.user
+        )
+
+        # Guard: must be in_progress to request completion
+        if booking.status != Booking.STATUS_IN_PROGRESS:
+            return Response(
+                {
+                    'error': f"Booking must be 'in_progress' to request completion.",
+                    'current_status': booking.status,
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Guard: client must have a phone number
+        if not booking.client.phone_number:
+            return Response(
+                {'error': 'Client has no phone number on file. Cannot send OTP.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Generate and store OTP in Redis — 10 minute TTL
+        otp       = generate_otp()
+        cache_key = f"completion_otp:{booking.id}"
+        cache.set(cache_key, otp, timeout=600)
+
+        # Fire SMS task asynchronously
+        send_completion_otp.delay(
+            str(booking.id),
+            booking.client.phone_number,
+            otp,
+        )
+
+        # Update status
+        booking.status = Booking.STATUS_AWAITING_CONFIRMATION
+        booking.save(update_fields=['status', 'updated_at'])
+
+        return Response({
+            'message': 'OTP sent to client\'s phone. Ask the client for the code.',
+            'status':  booking.status,
+        })
+
+
+class ConfirmCompletionView(APIView):
+    """
+    POST /bookings/:id/confirm-completion/
+    Pro submits the OTP the client verbally gave them.
+
+    What happens:
+    1. Validate booking is awaiting_confirmation
+    2. Fetch OTP from Redis
+    3. Compare submitted OTP
+    4. If valid → mark completed, delete OTP from Redis
+    5. Signal fires → ProProfile avg_rating + total_jobs updated
+
+    Why does the PRO submit the OTP and not the client?
+    The pro is physically present with the client. The client reads
+    the OTP off their phone and tells the pro. The pro enters it into
+    their app. This confirms the client was present and satisfied.
+    It's the same UX as Uber/Urban Company job confirmation.
+    """
+    permission_classes = [IsAuthenticated, IsProUser]
+
+    def post(self, request, pk):
+        booking = get_object_or_404(
+            Booking, pk=pk, pro=request.user
+        )
+
+        # Guard: must be awaiting confirmation
+        if booking.status != Booking.STATUS_AWAITING_CONFIRMATION:
+            return Response(
+                {
+                    'error': "Booking is not awaiting confirmation.",
+                    'current_status': booking.status,
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        submitted_otp = request.data.get('otp')
+        if not submitted_otp:
+            return Response(
+                {'error': 'OTP is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        cache_key  = f"completion_otp:{booking.id}"
+        cached_otp = cache.get(cache_key)
+
+        # OTP expired
+        if not cached_otp:
+            return Response(
+                {
+                    'error': 'OTP has expired. Please request a new one.',
+                    'action': f'POST /bookings/{booking.id}/request-completion/',
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # OTP wrong
+        if submitted_otp != cached_otp:
+            return Response(
+                {'error': 'Invalid OTP. Please check with the client.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ OTP valid — mark completed
+        booking.status = Booking.STATUS_COMPLETED
+        booking.save(update_fields=['status', 'updated_at'])
+
+        # Clean up OTP from Redis — single use
+        cache.delete(cache_key)
+
+        # Signal fires automatically here →
+        # apps/bookings/signals.py → update_pro_rating runs
+        # No explicit call needed
+
+        return Response({
+            'message': 'Job marked as completed successfully.',
+            'status':  booking.status,
+        })
