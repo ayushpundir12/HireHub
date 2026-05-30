@@ -455,3 +455,75 @@ def logout(request):
         pass  # even if Supabase fails, we treat as logged out
 
     return Response({'message': 'Logged out successfully.'})
+
+
+
+
+# ──────────────────────────────────────────────
+#  GET/PATCH /api/v1/auth/profile/
+# ──────────────────────────────────────────────
+from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsFullyVerified])
+def profile(request):
+    """
+    GET  → return current user's full profile
+    PATCH → update editable fields (name, locality, avatar, phone, lat/lng)
+
+    Why one endpoint for both?
+    The frontend profile page loads data (GET) then submits changes (PATCH).
+    Keeping them on the same URL makes the API intuitive — the URL
+    represents the resource, the HTTP method represents the action.
+    """
+    if request.method == 'GET':
+        return Response(UserSerializer(request.user).data)
+
+    # PATCH
+    serializer = ProfileUpdateSerializer(
+        request.user,
+        data=request.data,
+        partial=True   # partial=True means fields are optional — only update what's sent
+    )
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
+    # Return full profile after update so frontend stays in sync
+    return Response(UserSerializer(request.user).data)
+
+
+# ──────────────────────────────────────────────
+#  POST /api/v1/auth/change-password/
+# ──────────────────────────────────────────────
+@api_view(['POST'])
+@permission_classes([IsFullyVerified])
+def change_password(request):
+    """
+    Change password via Supabase Admin API.
+
+    Why Supabase Admin API and not the user-facing API?
+    The user-facing password update requires the current password.
+    Using the admin API lets us handle this server-side cleanly
+    without asking the user to re-enter their current password.
+
+    Security note: This endpoint is already protected by IsFullyVerified
+    — the user must be authenticated with a valid JWT to reach this.
+    """
+    serializer = ChangePasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    new_password = serializer.validated_data['new_password']
+
+    try:
+        supabase.auth.admin.update_user_by_id(
+            str(request.user.id),
+            {'password': new_password}
+        )
+    except Exception as e:
+        logger.error(f"Password change failed for user {request.user.id}: {e}")
+        return Response(
+            {'error': 'Password change failed. Please try again.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    return Response({'message': 'Password updated successfully.'})

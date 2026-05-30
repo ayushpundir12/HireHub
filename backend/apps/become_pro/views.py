@@ -1,47 +1,76 @@
-from django.shortcuts import render
-from  rest_framework.decorators import api_view,permission_classes
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.utils.timezone import now
+
 from apps.users.permissions import IsFullyVerified
 from .models import ProApplication
+from .serializers import (
+    PersonalInfoSerializer,
+    ServiceInfoSerializer,
+    KYCSerializer,
+    PCCSerializer,
+    SkillCertificatesSerializer,
+    LocationSerializer,
+    ProApplicationStatusSerializer,
+)
 
 
-@api_view(['Post'])
-@permission_classes(['IsFullyVerified'])
+# ── Helper ─────────────────────────────────────────────────────────────────────
+
+def get_draft_application(user):
+    try:
+        app = ProApplication.objects.get(user=user)
+        if app.status in [
+            ProApplication.Status.DRAFT,
+            ProApplication.Status.RESUBMISSION_REQUIRED
+        ]:
+            return app
+        return None
+    except ProApplication.DoesNotExist:
+        return None
+
+
+# ── Start Application ──────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsFullyVerified])
 def become_pro(request):
-    user= request.user
+    user = request.user
 
-    if user.role=='pro':
+    if user.role == 'pro':
         return Response(
-            {'error':'yo are already pro'},
+            {'error': 'You are already a Pro.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    existing=ProApplication.objects.filter(user=user).first()
+    existing = ProApplication.objects.filter(user=user).first()
 
     if existing:
-        if existing.status==ProApplication.status.Submitted:
+        if existing.status == ProApplication.Status.SUBMITTED:
             return Response(
                 {'error': 'Your application is already submitted and under review.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        if existing.status==ProApplication.status.Approved:
-            return Response(
-                {'error': 'Your application is already approved.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if existing.status==ProApplication.status.UNDER_REVIEW:
+        if existing.status == ProApplication.Status.UNDER_REVIEW:
             return Response(
                 {'error': 'Your application is currently being reviewed by our team.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
+        if existing.status == ProApplication.Status.APPROVED:
+            return Response(
+                {'error': 'Your application is already approved.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         return Response({
             'message': 'You have an existing application. Please complete and submit it.',
             'application_id': str(existing.id),
             'status': existing.status
         }, status=status.HTTP_200_OK)
-    
-    application=ProApplication.objects.create(user=user)
 
+    application = ProApplication.objects.create(user=user)
     return Response({
         'message': 'Application started. Please complete all sections and submit.',
         'application_id': str(application.id),
@@ -49,36 +78,55 @@ def become_pro(request):
     }, status=status.HTTP_201_CREATED)
 
 
-@api_view(['Pro'])
-@permission_classes(['IsFullyVerified'])
-def submit_pro_application(request):
-    user=request.user
+# ── Application Status ─────────────────────────────────────────────────────────
 
+@api_view(['GET'])
+@permission_classes([IsFullyVerified])
+def application_status(request):
     try:
-        application=ProApplication.objects.get(user=user)
+        app = ProApplication.objects.get(user=request.user)
+    except ProApplication.DoesNotExist:
+        return Response(
+            {'error': 'No application found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    serializer = ProApplicationStatusSerializer(app)
+    return Response(serializer.data)
+
+
+# ── Submit ─────────────────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsFullyVerified])
+def submit_pro_application(request):
+    try:
+        app = ProApplication.objects.get(user=request.user)
     except ProApplication.DoesNotExist:
         return Response(
             {'error': 'No application found. Please start your application first.'},
             status=status.HTTP_404_NOT_FOUND
         )
 
-    if application.status not in [
+    if app.status not in [
         ProApplication.Status.DRAFT,
         ProApplication.Status.RESUBMISSION_REQUIRED
     ]:
         return Response(
-            {'error': f'Application cannot be submitted at current status: {application.status}'},
+            {'error': f'Application cannot be submitted at current status: {app.status}'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    application.status=ProApplication.status.SUBMITTED
-    application.submitted_at = now()
-    application.save(update_fields=['status', 'submitted_at'])
+
+    app.status       = ProApplication.Status.SUBMITTED
+    app.submitted_at = now()
+    app.save(update_fields=['status', 'submitted_at'])
 
     return Response({
         'message': 'Your application has been submitted. Our team will contact you as soon as possible.',
-        'status': application.status
+        'status': app.status
     }, status=status.HTTP_200_OK)
+
+
+# ── Step Base View ─────────────────────────────────────────────────────────────
 
 class BaseStepView(APIView):
     permission_classes = [IsFullyVerified]
@@ -101,6 +149,8 @@ class BaseStepView(APIView):
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# ── Step Views ─────────────────────────────────────────────────────────────────
 
 class PersonalInfoView(BaseStepView):
     serializer_class = PersonalInfoSerializer

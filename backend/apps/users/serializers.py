@@ -36,3 +36,37 @@ class VerifySerializer(serializers.Serializer):
     phone_otp = serializers.CharField(min_length=6, max_length=6)
 
     
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """
+    What a user is allowed to update on their own profile.
+    Email and role are intentionally excluded — those are
+    controlled by Supabase Auth and admin respectively.
+    """
+    class Meta:
+        model = User
+        fields = [
+            'full_name', 'locality', 'phone_number',
+            'lat', 'lng', 'avatar_url',
+        ]
+        extra_kwargs = {field: {'required': False} for field in fields}
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Validates password change input.
+    We don't store passwords — Supabase Auth does.
+    So this just validates the shape before we call Supabase.
+    """
+    new_password     = serializers.CharField(min_length=8, write_only=True)
+    confirm_password = serializers.CharField(min_length=8, write_only=True)
+
+    def validate(self, data):
+        """
+        validate() runs after individual field validation.
+        Cross-field checks go here.
+        """
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({
+                'confirm_password': 'Passwords do not match.'
+            })
+        return data

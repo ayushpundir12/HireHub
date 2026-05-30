@@ -96,3 +96,6 @@ class ProApplicationAdmin(admin.ModelAdmin):
             status=ProApplication.Status.RESUBMISSION_REQUIRED
         )
         self.message_user(request, f'{queryset.count()} application(s) flagged for resubmission.')
+    
+
+    
