@@ -5,26 +5,26 @@ from apps.users.models import User
 
 class Booking(models.Model):
 
-    STATUS_PENDING     = 'pending'
-    STATUS_CONFIRMED   = 'confirmed'
-    STATUS_IN_PROGRESS = 'in_progress'
-    STATUS_COMPLETED   = 'completed'
-    STATUS_CANCELLED   = 'cancelled'
+    STATUS_PENDING               = 'pending'
+    STATUS_CONFIRMED             = 'confirmed'
+    STATUS_IN_PROGRESS           = 'in_progress'
+    STATUS_AWAITING_CONFIRMATION = 'awaiting_confirmation'
+    STATUS_COMPLETED             = 'completed'
+    STATUS_CANCELLED             = 'cancelled'
 
     STATUS_CHOICES = [
-        (STATUS_PENDING,     'Pending'),
-        (STATUS_CONFIRMED,   'Confirmed'),
-        (STATUS_IN_PROGRESS, 'In Progress'),
-        (STATUS_COMPLETED,   'Completed'),
-        (STATUS_CANCELLED,   'Cancelled'),
+        (STATUS_PENDING,               'Pending'),
+        (STATUS_CONFIRMED,             'Confirmed'),
+        (STATUS_IN_PROGRESS,           'In Progress'),
+        (STATUS_AWAITING_CONFIRMATION, 'Awaiting Confirmation'),
+        (STATUS_COMPLETED,             'Completed'),
+        (STATUS_CANCELLED,             'Cancelled'),
     ]
 
-    # Valid transitions: who can move booking to which state
-    # Format: {current_status: [allowed_next_statuses]}
     PRO_TRANSITIONS = {
-        STATUS_PENDING:     [STATUS_CONFIRMED, STATUS_CANCELLED],
-        STATUS_CONFIRMED:   [STATUS_IN_PROGRESS, STATUS_CANCELLED],
-        STATUS_IN_PROGRESS: [],
+        'pending':     ['confirmed', 'cancelled'],
+        'confirmed':   ['in_progress', 'cancelled'],
+        'in_progress': [],
     }
 
     PAYMENT_CASH    = 'cash'
@@ -53,7 +53,7 @@ class Booking(models.Model):
     scheduled_at   = models.DateTimeField()
     duration_hours = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
     amount         = models.DecimalField(max_digits=10, decimal_places=2)
-    status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    status         = models.CharField(max_length=25, choices=STATUS_CHOICES, default=STATUS_PENDING)
     payment_mode   = models.CharField(max_length=10, choices=PAYMENT_MODE_CHOICES)
     payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_UNPAID)
     stripe_pi_id   = models.CharField(max_length=100, blank=True)
