@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.timezone import now
 from .models import ProApplication
 from apps.pros.models import ProProfile
-
+from apps.notifications.tasks import notify_kyc_approved, notify_kyc_rejected
 
 @admin.register(ProApplication)
 class ProApplicationAdmin(admin.ModelAdmin):
@@ -75,6 +75,8 @@ class ProApplicationAdmin(admin.ModelAdmin):
             )
             approved_count += 1
         self.message_user(request, f'{approved_count} application(s) approved and Pro profiles created.')
+        notify_kyc_approved.delay(str(application.user.id))
+
 
     @admin.action(description='❌ Reject selected applications')
     def reject_applications(self, request, queryset):
@@ -82,6 +84,7 @@ class ProApplicationAdmin(admin.ModelAdmin):
             status=ProApplication.Status.REJECTED
         )
         self.message_user(request, f'{queryset.count()} application(s) rejected.')
+        notify_kyc_rejected.delay(str(application.user.id), reason=application.rejection_reason)
 
     @admin.action(description='🔍 Mark as Under Review')
     def mark_under_review(self, request, queryset):
