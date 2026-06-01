@@ -35,7 +35,15 @@ class CreateBookingView(APIView):
         serializer = BookingCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Inject client from the JWT — never trust client-supplied client_id
+        # Prevent a pro from booking themselves — use server-side data,
+        # never trust client-submitted fields like request.data['role']
+        pro = serializer.validated_data['pro']
+        if pro.id == request.user.id:
+            return Response(
+                {'error': 'You cannot book yourself.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         booking = serializer.save(client=request.user)
         return Response(BookingListSerializer(booking).data, status=status.HTTP_201_CREATED)
 
