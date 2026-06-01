@@ -1,0 +1,57 @@
+.page { padding: 40px 0 80px; }
+
+.startCard {
+  text-align: center; padding: 80px 40px;
+  background: var(--color-surface-warm); border-radius: var(--radius-xl);
+}
+
+.statusCard {
+  text-align: center; padding: 60px 40px;
+  background: var(--color-surface); border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+.verifyGrid {
+  display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap;
+}
+
+.verifyItem {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 100px;
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  background: var(--color-surface-warm); color: var(--color-ink-muted);
+}
+
+.verified {
+  background: var(--color-success-light); color: var(--color-success);
+}
+
+.stepForm {
+  display: flex; flex-direction: column; gap: 16px;
+  background: var(--color-surface); border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md); padding: 32px;
+}
+
+.fileInput {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm); font-size: 0.875rem;
+  color: var(--color-ink-muted); cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.fileInput:hover {
+  border-color: var(--color-accent); background: var(--color-accent-light);
+}
+
+.stepNav {
+  display: flex; gap: 12px; margin-top: 24px;
+}
+
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) {
+  .stepForm { padding: 20px; }
+  .startCard { padding: 48px 24px; }
+}

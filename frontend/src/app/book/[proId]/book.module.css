@@ -1,0 +1,33 @@
+.page { padding: 40px 0 80px; }
+.form { display: flex; flex-direction: column; gap: 20px; }
+.row { display: flex; gap: 16px; }
+
+.paymentModes { display: flex; gap: 12px; }
+.paymentOption {
+  flex: 1; display: flex; align-items: center; gap: 14px;
+  padding: 16px; border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md); cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.paymentOption:hover { border-color: var(--color-ink-muted); }
+.paymentActive {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+.paymentTitle { font-weight: 600; font-size: 0.9375rem; }
+.paymentDesc { font-size: 0.8125rem; color: var(--color-ink-muted); margin-top: 2px; }
+
+.summary {
+  background: var(--color-surface-warm); border-radius: var(--radius-md);
+  padding: 20px; display: flex; flex-direction: column; gap: 10px;
+}
+.summaryRow { display: flex; justify-content: space-between; font-size: 0.9375rem; color: var(--color-ink-light); }
+.summaryTotal { font-weight: 700; font-size: 1.125rem; color: var(--color-ink); padding-top: 10px; border-top: 1px solid var(--color-border); }
+
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 600px) {
+  .row { flex-direction: column; }
+  .paymentModes { flex-direction: column; }
+}

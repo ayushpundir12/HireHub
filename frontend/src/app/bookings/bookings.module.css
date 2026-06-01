@@ -1,0 +1,20 @@
+.page { padding: 40px 0 80px; }
+.list { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+.bookingCard { padding: 20px 24px; }
+.skeletonCard { padding: 24px; }
+
+.cardTop { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.cardTitle { font-weight: 600; font-size: 1rem; text-transform: capitalize; }
+.cardPro { font-size: 0.875rem; color: var(--color-ink-muted); margin-top: 2px; }
+
+.cardMeta {
+  display: flex; gap: 16px; align-items: center;
+  font-size: 0.8125rem; color: var(--color-ink-muted);
+  padding-top: 12px; border-top: 1px solid var(--color-border-light);
+}
+
+.cardActions { display: flex; gap: 8px; margin-top: 12px; }
+
+.starInput { display: flex; gap: 4px; }
+.starBtn { padding: 2px; cursor: pointer; transition: transform var(--transition-fast); background: none; border: none; }
+.starBtn:hover { transform: scale(1.15); }

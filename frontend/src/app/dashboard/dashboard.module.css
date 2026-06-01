@@ -1,0 +1,29 @@
+.page { padding: 40px 0 80px; }
+.header { margin-bottom: 32px; }
+
+.chartSection {
+  margin-top: 32px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: 24px;
+}
+.chartHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.chartTabs { display: flex; gap: 4px; }
+.chartTabActive { background: var(--color-surface-warm) !important; color: var(--color-ink) !important; font-weight: 600 !important; }
+
+.bookingsSection { margin-top: 32px; }
+.bookingsList { display: flex; flex-direction: column; gap: 12px; }
+.bookingItem { padding: 20px; }
+.bookingTop { display: flex; justify-content: space-between; align-items: flex-start; }
+.bookingTitle { font-weight: 600; text-transform: capitalize; margin-bottom: 2px; }
+.bookingAmount { font-weight: 700; font-size: 1.125rem; margin: 12px 0; }
+.bookingActions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.otpWrap { display: flex; gap: 8px; align-items: center; }
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+  .chartHeader { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
