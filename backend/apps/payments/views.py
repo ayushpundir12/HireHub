@@ -47,9 +47,13 @@ class InitiatePaymentView(APIView):
         serializer.is_valid(raise_exception=True)
 
         booking_id = serializer.validated_data['booking_id']
-        booking    = Booking.objects.select_related('client', 'pro').get(
-            id=booking_id
-        )
+        try:
+            booking = Booking.objects.select_related('client', 'pro').get(id=booking_id)
+        except Booking.DoesNotExist:
+            return Response(
+                {'error': 'Booking not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         # Security: only the client of this booking can pay
         if booking.client != request.user:

@@ -281,7 +281,7 @@ def login(request):
 #  GET /api/v1/auth/me/
 # ──────────────────────────────────────────────
 @api_view(['GET'])
-@permission_classes([IsFullyVerified])
+@permission_classes([IsAuthenticated])
 def me(request):
     """Return the authenticated user's profile."""
     return Response(UserSerializer(request.user).data)
@@ -424,7 +424,7 @@ def verify_phone_only(request):
 
     # Step 2 — verify OTP
     user_id    = str(request.user.id)
-    cached_otp = cache.get(f"otp:phone:{user_id}")
+    cached_otp = cache.get(f"phone_otp:{user_id}")
 
     if not cached_otp:
         return Response(
@@ -440,7 +440,7 @@ def verify_phone_only(request):
 
     request.user.is_number_verified = True
     request.user.save(update_fields=['is_number_verified'])
-    cache.delete(f"otp:phone:{user_id}")
+    cache.delete(f"phone_otp:{user_id}")
 
     return Response({
         'message': 'Phone verified. You can now access the platform.',

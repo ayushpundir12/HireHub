@@ -5,6 +5,7 @@ urlpatterns = [
     # Email/Password auth
     path('signup/',           views.signup,           name='signup'),
     path('verify/',           views.verify,           name='verify'),
+    path('verify-account/',   views.verify_account,   name='verify-account'),
     path('login/',            views.login,            name='login'),
     path('resend-otp/',       views.resend_otp,       name='resend-otp'),
 

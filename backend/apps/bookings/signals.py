@@ -21,14 +21,20 @@ def update_pro_rating(sender, instance, created, **kwargs):
     from apps.pros.models import ProProfile
     from apps.pros.cache import invalidate_pro_cache
 
+    from apps.bookings.models import Booking
+    
     stats = Review.objects.filter(pro=instance.pro).aggregate(
-        avg=Avg('rating'),
-        total=Count('id')
+        avg=Avg('rating')
     )
+    
+    completed_jobs = Booking.objects.filter(
+        pro=instance.pro,
+        status=Booking.STATUS_COMPLETED
+    ).count()
 
     ProProfile.objects.filter(user=instance.pro).update(
         avg_rating=stats['avg'] or 0,
-        total_jobs=stats['total'],
+        total_jobs=completed_jobs,
     )
 
     # Bust the pro's cache so discovery shows fresh rating

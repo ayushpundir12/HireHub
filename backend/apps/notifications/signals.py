@@ -29,6 +29,10 @@ def booking_status_changed(sender, instance, created, **kwargs):
         notify_booking_received.delay(str(instance.id))
         return
 
+    update_fields = kwargs.get('update_fields')
+    if update_fields is not None and 'status' not in update_fields:
+        return
+
     # Status update — check what it changed to
     if instance.status == Booking.STATUS_CONFIRMED:
         notify_booking_confirmed.delay(str(instance.id))

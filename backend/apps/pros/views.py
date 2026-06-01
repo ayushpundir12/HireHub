@@ -95,6 +95,23 @@ class ProDetailView(RetrieveAPIView):
         return Response(serializer.data)
 
 
+class ProDetailByUserView(RetrieveAPIView):
+    """
+    GET /pros/user/<user_id>/
+    Public.
+    """
+    serializer_class   = ProPublicSerializer
+    permission_classes = [AllowAny]
+
+    def retrieve(self, request, *args, **kwargs):
+        user_id = self.kwargs['user_id']
+        pro = get_object_or_404(
+            ProProfile.objects.select_related('user'), user__id=user_id
+        )
+        serializer = self.get_serializer(pro)
+        return Response(serializer.data)
+
+
 # ── Pro Self-Service ───────────────────────────────────────────────────────────
 
 class ProOwnProfileView(APIView):

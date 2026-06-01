@@ -74,17 +74,19 @@ class ProApplicationAdmin(admin.ModelAdmin):
                 }
             )
             approved_count += 1
+            notify_kyc_approved.delay(str(application.user.id))
         self.message_user(request, f'{approved_count} application(s) approved and Pro profiles created.')
-        notify_kyc_approved.delay(str(application.user.id))
 
 
     @admin.action(description='❌ Reject selected applications')
     def reject_applications(self, request, queryset):
-        queryset.exclude(status=ProApplication.Status.APPROVED).update(
+        for application in queryset.exclude(status=ProApplication.Status.APPROVED):
+            notify_kyc_rejected.delay(str(application.user.id), reason=application.rejection_reason)
+            
+        count = queryset.exclude(status=ProApplication.Status.APPROVED).update(
             status=ProApplication.Status.REJECTED
         )
-        self.message_user(request, f'{queryset.count()} application(s) rejected.')
-        notify_kyc_rejected.delay(str(application.user.id), reason=application.rejection_reason)
+        self.message_user(request, f'{count} application(s) rejected.')
 
     @admin.action(description='🔍 Mark as Under Review')
     def mark_under_review(self, request, queryset):

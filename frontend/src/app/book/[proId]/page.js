@@ -27,14 +27,10 @@ export default function BookPage() {
 
   useEffect(() => {
     const fetchPro = async () => {
-      // proId is user_id, we need to find the pro profile
-      const { data } = await apiGet(`/pros/?available=true`);
-      if (data?.results) {
-        const found = data.results.find(p => p.user_id === proId);
-        if (found) {
-          setPro(found);
-          setForm(f => ({ ...f, category: found.category }));
-        }
+      const { data } = await apiGet(`/pros/user/${proId}/`);
+      if (data && !data.error) {
+        setPro(data);
+        setForm(f => ({ ...f, category: data.category }));
       }
       setLoading(false);
     };

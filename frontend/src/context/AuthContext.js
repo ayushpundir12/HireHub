@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
 
   // Verify OTP (email + phone)
   const verifyOtp = async (emailOtp, phoneOtp) => {
-    return apiPost('/auth/verify/', {
+    return apiPost('/auth/verify-account/', {
       email_otp: emailOtp,
       phone_otp: phoneOtp,
     });
