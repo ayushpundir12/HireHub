@@ -35,7 +35,7 @@ export default function LoginPage() {
     }
 
     toast.success('Welcome back!');
-    router.push('/browse');
+    window.location.href = '/browse';
   };
 
   return (

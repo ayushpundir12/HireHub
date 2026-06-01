@@ -36,10 +36,13 @@ export function AuthProvider({ children }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         setSession(newSession);
         if (newSession) {
-          await fetchProfile();
+          // Defer fetchProfile to avoid Supabase auth lock deadlock
+          setTimeout(() => {
+            fetchProfile();
+          }, 0);
         } else {
           setUser(null);
         }
