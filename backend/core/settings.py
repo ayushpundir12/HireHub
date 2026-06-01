@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'apps.payments',
     'apps.dashboard',
     'apps.become_pro',
+    'apps.notifications',
 ]
 
 # ── Middleware ─────────────────────────────────────────────
