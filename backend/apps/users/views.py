@@ -125,13 +125,16 @@ def oauth_callback(request):
             )
 
         # Get or create the Django user
+        phone = sb_user.user_metadata.get('phone_number', '') or None
         user, created = User.objects.get_or_create(
             id=sb_user.id,
             defaults={
                 'email': sb_user.email,
                 'full_name': sb_user.user_metadata.get('full_name', ''),
                 'role': sb_user.user_metadata.get('role', 'client'),
-                'phone_number': sb_user.user_metadata.get('phone_number', ''),
+                'phone_number': phone,
+                'is_email_verified': True,   # Google already verified email
+                'auth_provider': 'google',
             }
         )
 
@@ -143,7 +146,7 @@ def oauth_callback(request):
                 'user_id':str(user.id),
                 'is_new':True,
                 'next_step':'verify_phone',
-                'acess_token':access_token,                
+                'access_token':access_token,                
             },status=status.HTTP_201_CREATED)
 
         else:

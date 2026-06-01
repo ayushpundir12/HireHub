@@ -55,6 +55,9 @@ class SupabaseJWTAuthentication(BaseAuthentication):
         try:
             user = User.objects.get(id=payload['sub'])
         except User.DoesNotExist:
-            raise AuthenticationFailed('User not found.')
+            # Return None instead of raising — lets AllowAny endpoints
+            # (like oauth/callback/) work for users not yet in Django.
+            # Protected endpoints will deny via their permission classes.
+            return None
 
         return (user, token)

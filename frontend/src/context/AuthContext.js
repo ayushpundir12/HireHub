@@ -132,7 +132,11 @@ export function AuthProvider({ children }) {
 
   // Logout
   const logout = async () => {
-    await apiPost('/auth/logout/', {});
+    try {
+      await apiPost('/auth/logout/', {});
+    } catch (e) {
+      // Ignore — still sign out locally
+    }
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -151,7 +155,7 @@ export function AuthProvider({ children }) {
     resendOtp,
     logout,
     fetchProfile,
-    isAuthenticated: !!session,
+    isAuthenticated: !!session && !!user,
     isPro: user?.role === 'pro',
     isVerified: user?.is_email_verified && user?.is_number_verified,
   };
