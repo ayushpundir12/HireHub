@@ -358,8 +358,16 @@ kyc/pcc/skills_verified
 ---
 
 ## Screenshots
+<img width="1797" height="978" alt="image" src="https://github.com/user-attachments/assets/e84ad5ab-c8ef-4ba1-8950-152ec5f25143" />
+<img width="1661" height="789" alt="image" src="https://github.com/user-attachments/assets/a32cd612-ecb6-48b9-8785-4c197d925a39" />
+<img width="1677" height="977" alt="image" src="https://github.com/user-attachments/assets/9429e872-164e-424a-9347-db9aeb8dec3a" />
+<img width="1520" height="937" alt="image" src="https://github.com/user-attachments/assets/a7e7a2f5-d767-474c-9106-d37897025a58" />
+<img width="1840" height="792" alt="image" src="https://github.com/user-attachments/assets/67c31eb4-63f4-4ef2-afcd-db335b413da3" />
+<img width="1538" height="564" alt="image" src="https://github.com/user-attachments/assets/634e3809-dad0-4062-99df-249c6233eb02" />
+<img width="1485" height="872" alt="image" src="https://github.com/user-attachments/assets/41982fc5-9161-4f4d-bcdb-c3147d631d57" />
+<img width="1593" height="880" alt="image" src="https://github.com/user-attachments/assets/f3222d35-1239-4548-8c2d-50bb5d920f81" />
 
-> See `/docs/screenshots/` folder
+
 
 ---
 
