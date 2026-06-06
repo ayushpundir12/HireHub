@@ -217,3 +217,9 @@ next-env.d.ts
 # End of https://www.toptal.com/developers/gitignore/api/django,nextjs,vercel,redis
 
 backend/test_outh_model.html
+
+.env
+*.pyc
+__pycache__/
+staticfiles/
+db.sqlite3
