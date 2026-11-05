@@ -376,7 +376,3 @@ kyc/pcc/skills_verified
 MIT
 
 ---
-
-<div align="center">
-Built by <strong>Your Name</strong> · <a href="https://linkedin.com/in/yourprofile">LinkedIn</a> · <a href="https://github.com/yourusername">GitHub</a>
-</div>
